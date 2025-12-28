@@ -15,19 +15,16 @@ export async function generateInvoicePDF(data: InvoiceData) {
     day: "2-digit",
   })
 
-  // Create a temporary container for the invoice HTML
   const container = document.createElement("div")
   container.style.position = "absolute"
   container.style.left = "-9999px"
-  container.style.width = "816px" // 8.5in at 96 DPI
+  container.style.width = "816px"
   container.style.backgroundColor = "white"
   document.body.appendChild(container)
 
-  // Set innerHTML
   container.innerHTML = generateInvoiceHTML(data, invoiceNumber, currentDate)
 
   try {
-    // Convert HTML to canvas
     const canvas = await html2canvas(container, {
       scale: 2,
       backgroundColor: "#ffffff",
@@ -35,7 +32,6 @@ export async function generateInvoicePDF(data: InvoiceData) {
       useCORS: true,
       allowTaint: true,
       onclone: (clonedDoc) => {
-        // Remove any lab() color functions from the cloned document
         const style = clonedDoc.createElement('style')
         style.textContent = `
           * {
@@ -48,7 +44,6 @@ export async function generateInvoicePDF(data: InvoiceData) {
       }
     })
 
-    // Create PDF from canvas
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -61,11 +56,9 @@ export async function generateInvoicePDF(data: InvoiceData) {
     const imgWidth = pdfWidth
     const imgHeight = (canvas.height * pdfWidth) / canvas.width
 
-    // Add image to PDF, centered if needed
     const yOffset = imgHeight > pdfHeight ? 0 : (pdfHeight - imgHeight) / 2
     pdf.addImage(imgData, "PNG", 0, yOffset, imgWidth, Math.min(imgHeight, pdfHeight))
 
-    // Download the PDF
     pdf.save(`${data.employeeName.replace(/\s+/g, '-')}-${invoiceNumber}.pdf`)
   } finally {
     document.body.removeChild(container)
